@@ -516,7 +516,7 @@ class Game:
 
         self.log_game()
         print(data[-1])
-
-while True:
+        
+if __name__ == "__main__":
   game = Game(strategy= "strategy_one")
   game.run()
