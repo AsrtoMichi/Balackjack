@@ -317,10 +317,7 @@ class Player:
 
 
     def __str__(self):
-        return f"Name: + {str(self.name)}; Hand: {str(self.hand)}; 
-            Budget: {str(self.budget)}; Hand Value: ' + str(self.hand.value())
-            + '; Hand is soft: ' + str(self.hand.soft) + '; Busted: '
-            + str(self.check_bust()) + '; State: ' + str(self.state)"
+        return f"Name: + {str(self.name)}; Hand: {str(self.hand)}; Budget: {str(self.budget)}; Hand Value: {str(self.hand.value())}; Hand is soft: {str(self.hand.soft)}; Busted: {(self.check_bust())}; {str(self.state)}"
 
 
 
