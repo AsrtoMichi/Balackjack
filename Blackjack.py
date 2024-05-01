@@ -48,7 +48,7 @@ class Card:
 
 
     def __str__(self):
-        return self.rank + '-' + self.suit
+        return f"{self.rank}-{self.suit}"
 
 
 class Deck:
@@ -92,7 +92,7 @@ class Deck:
 
 
     def __str__(self):
-        return '[' + ', '.join(map(str, self.cards)) + ']'
+        return f"{', '.join(map(str, self.cards}"
 
 
 
@@ -169,9 +169,8 @@ class Hand:
         self.cards.append(Game.deck.deal_card())
 
 
-
     def __str__(self):
-        return str([str(c) for c in self.cards])
+        return f"{[f"{c}" for c in self.cards]}"
 
 
 
