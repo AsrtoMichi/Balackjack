@@ -300,8 +300,11 @@ class Player:
             else:
                 if player_hand_value <= 11:
                     self.hit()
-                elif player_hand_value == 12 and dealer_up_card.rank in [2, 3, 7, 8, 9, 10, 'J', 'Q', 'K', 'A']:
-                    self.hit()
+                elif player_hand_value == 12 
+                    if dealer_up_card.rank in [2, 3, 7, 8, 9, 10, 'J', 'Q', 'K', 'A']:
+                        self.hit()
+                    else:
+                        self.stay()
                 elif 13 <= player_hand_value <= 16:
                     if dealer_up_card.rank in [2, 3, 4, 5, 6]:
                         self.stay()
