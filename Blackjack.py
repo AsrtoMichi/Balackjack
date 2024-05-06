@@ -86,14 +86,9 @@ class Deck:
         # Check if there are no cards left in the deck
         if not self.cards:
             self.generate_deck()
-        # As long as there are cards left in the deck, pop one from the top of the deck out.
+        # As long as there are cards left in the deck, pop one from the top of the deck out,
         # return the drawn card so it can be added to the hand
         return self.cards.pop(0)
-
-
-    def __str__(self):
-        return f"{', '.join(map(str, self.cards}"
-
 
 
 class Hand:
@@ -170,7 +165,7 @@ class Hand:
 
 
     def __str__(self):
-        return f"{[f"{c}" for c in self.cards]}"
+        return f"{', '.join(map(str, self.cards))}"
 
 
 
@@ -300,7 +295,7 @@ class Player:
             else:
                 if player_hand_value <= 11:
                     self.hit()
-                elif player_hand_value == 12 
+                elif player_hand_value == 12: 
                     if dealer_up_card.rank in [2, 3, 7, 8, 9, 10, 'J', 'Q', 'K', 'A']:
                         self.hit()
                     else:
@@ -314,10 +309,8 @@ class Player:
                     self.stay()
 
 
-
-
     def __str__(self):
-        return f"Name: + {str(self.name)}; Hand: {str(self.hand)}; Budget: {str(self.budget)}; Hand Value: {str(self.hand.value())}; Hand is soft: {str(self.hand.soft)}; Busted: {(self.check_bust())}; {str(self.state)}"
+        return f"Name: {str(self.name)}; Budget: {str(self.budget)};\nHand: {str(self.hand)};\nHand Value: {str(self.hand.value())}\n"
 
 
 
@@ -352,7 +345,7 @@ class Dealer(Player):
             self.stay()
 
     def __str__(self):
-        return 'Name: ' + self.name + '; up_card: [\'' + str(self.up_card) + '\']'
+        return f"Name: {self.name}; up_card: {self.up_card}"
 
 
 
@@ -403,10 +396,12 @@ class Game:
             self.player.budget -= 10
             self.pot += 10
             option = ('1', 'HIT', '2', 'STAY','3', 'BID')
+            question = "What would you like to do? \n1) Hit \n2) Stay \n3) Bid\n"
+            player_move = input(question).upper()
             while player_move not in option:
-                player_move = input("what would you like to do? \n1) Hit \n2) Stay \n3) Bid\n").uppper()
                 print('Not a valid move')
-                
+                player_move = input(question).upper()
+            
             # execute that move
             if player_move in option[:2]:
                 self.player.hit()
@@ -415,13 +410,14 @@ class Game:
             elif player_move in option[4:]:
                 self.pot += self.player.bid()
 
-            print(self.player.hand)
-            print(self.player.hand.value(), "/n")
+            print(f"Hand: {self.player.hand}")
+            print(f"Hand Value: {self.player.hand.value()}")
+            print()
 
             # Check if the player busted
-            self.player.check_bust()
-            if self.player.state == 'bust':
+            if self.player.check_bust():
                 print('Sorry, you busted.')
+                return True
 
 
         # get the move that the player wants to do
@@ -447,9 +443,15 @@ class Game:
         and the player hasn't
 
         '''
+        
+        # Check bust for both
+        self.dealer.check_bust()
+        self.player.check_bust()
 
-        if (((self.player.hand.value() > self.dealer.hand.value()) and
-            self.player.state != 'bust') or self.dealer.state == 'bust'):
+        player_value = self.player.hand.value()
+        dealer_value = self.dealer.hand.value()
+    
+        if (player_value > dealer_value and self.player.state != 'bust') or self.dealer.state == 'bust':
             if self.player.state == 'bust' and self.dealer.state == 'bust':
                 return False
             else:
@@ -486,37 +488,35 @@ class Game:
         '''
 
         self.pot = 0
-        self.player.state = 'play'
 
         if self.player.strategy is None:
-            print(self.player)
-            print(self.dealer)
             print('Buy in is 10 bucks.')
-
-        if self.dealer.hand.value() == 21:
-            self.player.state = 'stay'
+            print(self.dealer)
+            print()
+            print(self.player)
 
         # while the player and is not staying, busted or out of budget
         while 'play' in (self.player.state, self.dealer.state):
-            self.player_turn()
+            if self.player_turn():
+                break
             self.dealer.dealer_strategy()
            
         # add the dealers bet to the pot, which will always be equal to the pot.
         self.pot += self.dealer.bid(self.pot)
 
-        # Check bust for both
-        self.dealer.check_bust()
-        self.player.check_bust()
-
         # Check win and lost
         if self.player.strategy is None:
-            self.check_win()
+            if self.check_win():
+                print("You win!")
+            else: 
+                print("You lose.")
         else: 
             self.change_bid()
+            
 
         self.log_game()
-        print(data[-1])
+        #print(data[-1])
         
 if __name__ == "__main__":
-  game = Game(strategy= "strategy_one")
-  game.run()
+    game = Game(strategy= None)
+    game.run()
