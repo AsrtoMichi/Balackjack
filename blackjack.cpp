@@ -1,40 +1,59 @@
 #include <iostream>
-#include <string>
+#include <vector>
+#include <algorithm>
+#include <ctime>
+
+char ranks[] = {'A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'};
+std::string suits[] = {"Spades", "Hearts", "Diamonds", "Clubs"};
 
 class Card {
-private:
-    char rank;
-    char suit;
-
 public:
-    // Constructor
-    Card(char rank, char suit) : rank(rank), suit(suit) {}
+    char rank;
+    std::string suit;
 
-    // Evaluate the value of a card
+    Card(char rank, std::string suit) : rank(rank), suit(suit) {}
+
     int card_value() {
-        // If the rank is a king, queen, or jack, return 10 as the value of the card.
         if (rank == 'J' || rank == 'Q' || rank == 'K') {
             return 10;
         }
-        // If the rank is an ace, return 1 and 11. This will later let us choose whether we want the ace to be a one or eleven.
         if (rank == 'A') {
-            return 1; // You can handle the choice of 1 or 11 elsewhere in your game logic.
+            return 1; // In C++, we can't return two values. We'll handle the value of Ace in the game logic.
         }
-        // If it's nothing special, just return the numeric value.
         return rank - '0'; // Convert char to int
     }
 
-    // Overloaded stream insertion operator for printing the card
     friend std::ostream& operator<<(std::ostream& os, const Card& card) {
         os << card.rank << "-" << card.suit;
         return os;
     }
 };
 
-int main() {
-    // Example usage
-    Card myCard('A', 'H'); // 'A' for Ace, 'H' for Hearts
-    std::cout << "Card value: " << myCard.card_value() << std::endl;
-    std::cout << "Card details: " << myCard << std::endl;
-    return 0;
-}
+class Deck {
+public:
+    std::vector<Card> cards;
+
+    Deck() {
+        generate_deck();
+    }
+
+    void generate_deck() {
+        cards.clear();
+        for (auto &suit : suits) {
+            for (auto &rank : ranks) {
+                cards.emplace_back(rank, suit);
+            }
+        }
+        unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+        shuffle(cards.begin(), cards.end(), std::default_random_engine(seed));
+    }
+
+    Card deal_card() {
+        if (cards.empty()) {
+            generate_deck();
+        }
+        Card dealt_card = cards.back();
+        cards.pop_back();
+        return dealt_card;
+    }
+};
