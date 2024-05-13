@@ -19,7 +19,7 @@ bool coin_state() {
 }
     
 bool action() {
-    while (!button_hit %%!button_stay) {
+    while (!button_hit %% !button_stay) {
         if(button_hit) {
             return true;
         } else if (button_stay) {
@@ -135,6 +135,7 @@ public:
     void draw() {
         cards.push_back(deck.deal_card());
     }
+};
     
     std::string first_card() {
         if (!cards.empty()) {
@@ -146,127 +147,3 @@ public:
     std::string hand() {
         std::string hand;
         for (Card card : cards) {
-            hand += card.rank;
-            hand += card.suit;
-            hand += " ";
-        }
-        return hand;
-    }       
-            
-};
-
-
-class Participant {
-public:
-    bool state = true;
-    Hand hand;
-
-    void hit() {
-        hand.draw();
-        check_bust();
-    }
-
-    void stay() {
-        state = false;
-    }
-
-    bool check_bust() {
-        if (hand.value() > 21) {
-            state = false;
-            return true;
-        }
-        return false;
-    }
-};
-
-class Player : public Participant {
-public:
-
-    std::string hand_view() {            
-        return hand.hand();
-    }
-};
-
-class Dealer : public Participant {
-public:
-    void dealer_strategy() {
-        if (hand.value() < 17 && (
-            hand.value() == 17 || hand.soft)){
-            hit();
-        } else {
-            stay();
-        }
-    }
-
-    std::string card_up() {
-        return hand.first_card();
-    }
-};
-
-class Game {
-private:
-    Dealer dealer;
-    Player player;
-    Deck deck;
-
-public:
-    Game() : dealer(), player(), deck() {
-    }
-
-    void player_turn(){
-        player_wiew(player.hand_view(), player.hand.value());
-
-        if (action()) {
-            player.hit();
-        } else {
-            player.stay();
-        }
-
-        player.check_bust();
-    }
-
-    bool check_win() {
-        
-        dealer.check_bust();
-        player.check_bust();
-
-        int player_value = player.hand.value();
-        int dealer_value = dealer.hand.value();
-    
-        if ((player_value > dealer_value || player.state) && !dealer.state) {
-            if (!player.state || !dealer.state) {
-                return false;
-            } else {
-                return true;
-            }
-        } else {
-            return false;
-        }
-    }
-
-    void run() {
-        
-        dealer_wiew(dealer.card_up());
-      
-        while (player.state || dealer.state ) {
-            if (player.state){
-                player_turn();
-            }
-            if (dealer.state) {
-                dealer.dealer_strategy();
-            }
-        }
-
-        conclusion(check_win());
-    }
-};
-
-
-int main() {
-    
-    if (coin_state()) {
-        Game game;
-        game.run();
-        return 0;
-    }
-}
