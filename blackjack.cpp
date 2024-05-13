@@ -13,23 +13,17 @@ void player_wiew (std::string cards, int total) {
     //print cards, toral
 }
 
-bool decison () {
-    return false; // deve essere rimossa
-    while (true) {
-        if (button_stay) {
-            return false;
-        }
-        if (button_hit) {
-            return true;
-        }
-    }
+bool coin_state() {
+    while (!coin) {}
+    return coin;
 }
-
-bool coin_state (){
-    return true; // deve essere rimossa
-    while (true) {
-        if (coin) {
+    
+bool action() {
+    while (!button_hit %%!button_stay) {
+        if(button_hit) {
             return true;
+        } else if (button_stay) {
+            return false;
         }
     }
 }
@@ -45,7 +39,6 @@ void gestion_coin (bool action){
 void conclusion (bool conclusion) {
     if (conclusion) {
         //print win
-        
     } else {
         // print lose
     }
@@ -162,16 +155,11 @@ public:
             
 };
 
-class Player {
-private:
-    Deck deck;
 
+class Participant {
 public:
     bool state = true;
     Hand hand;
-    Player() {
-        
-    }
 
     void hit() {
         hand.draw();
@@ -189,42 +177,19 @@ public:
         }
         return false;
     }
+};
 
-    std::string hand_wiew() {            
+class Player : public Participant {
+public:
+
+    std::string hand_view() {            
         return hand.hand();
     }
 };
 
-class Dealer {
-private:
-    Deck deck;
-    
-
+class Dealer : public Participant {
 public:
-    bool state = true;
-    Hand hand;
-    Dealer() {}
-
-    void hit() {
-        hand.draw();
-        check_bust();
-    }
-
-    void stay() {
-        state = false;
-    }
-
-    bool check_bust() {
-        if (hand.value() > 21) {
-            state = false;
-            return true;
-        }
-        return false;
-    }
-    
-    
     void dealer_strategy() {
-
         if (hand.value() < 17 && (
             hand.value() == 17 || hand.soft)){
             hit();
@@ -242,21 +207,18 @@ class Game {
 private:
     Dealer dealer;
     Player player;
+    Deck deck;
 
 public:
-
-    Game() : dealer(), player() {
+    Game() : dealer(), player(), deck() {
     }
 
-
     void player_turn(){
-        
-        player_wiew(player.hand_wiew(), player.hand.value());
+        player_wiew(player.hand_view(), player.hand.value());
 
-    
-        if (decison()) {
+        if (action()) {
             player.hit();
-        } else if (false) {
+        } else {
             player.stay();
         }
 
