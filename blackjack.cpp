@@ -190,8 +190,7 @@ public:
 class Dealer : public Participant {
 public:
     void dealer_strategy() {
-        if (hand.value() < 17 && (
-            hand.value() == 17 || hand.soft)){
+        if (hand.value() < 17 || (hand.value() == 17 && hand.soft)) {
             hit();
         } else {
             stay();
@@ -261,5 +260,6 @@ int main() {
         Game game;
         game.run();
         return 0;
+    action()
     }
 }
