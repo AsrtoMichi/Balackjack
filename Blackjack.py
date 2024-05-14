@@ -1,12 +1,19 @@
-from random import shuffle
+'''
+
+Basic Blackjack program
+
+Follows all rules as provided on Wikipedia
+
+'''
+
+from random import shuffle, randint
 from typing import Literal, Union
-ranks = ('A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K')
-suits = ('Spades', 'Hearts', 'Diamonds', 'Clubs')
+import matplotlib.pyplot as plt
 data = []
 
 
 
-class Card:
+class Card():
 
     '''
 
@@ -51,7 +58,7 @@ class Card:
         return f"{self.rank}-{self.suit}"
 
 
-class Deck:
+class Deck():
 
     '''
 
@@ -66,12 +73,13 @@ class Deck:
     def __init__(self):
         # Create a deck, suit first then rank.
         # This makes the deck follow what a brand new pack of cards looks like.
-        self.generate_deck() 
-
-       
-    def generate_deck(self):
-        self.cards = [Card(rank, suit) for suit in suits for rank in ranks]
+        self.generate_deck()
         shuffle(self.cards)
+
+    def generate_deck(self):
+        ''' Initializes the deck '''
+        self.cards = [Card(rank, suit) for suit in ('Spades', 'Hearts', 'Diamonds', 'Clubs') for rank in ('A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K')]
+
 
 
     def deal_card(self) -> classmethod:
@@ -86,9 +94,14 @@ class Deck:
         # Check if there are no cards left in the deck
         if not self.cards:
             self.generate_deck()
-        # As long as there are cards left in the deck, pop one from the top of the deck out,
+        # As long as there are cards left in the deck, pop one from the top of the deck out.
         # return the drawn card so it can be added to the hand
         return self.cards.pop(0)
+
+
+    def __str__(self):
+        return f"{', '.join(map(str, self.cards))}"
+
 
 
 class Hand:
@@ -105,9 +118,11 @@ class Hand:
     '''
 
 
-    def __init__(self):
+    def __init__(self, deck: classmethod):
         # start with two cards in hand.
-        self.cards = [(Game.deck.deal_card()), (Game.deck.deal_card())]
+        self.cards = []
+        self.draw()
+        self.draw()
         self.soft = any(c.rank == 'A' for c in self.cards)
 
 
@@ -131,8 +146,8 @@ class Hand:
                 ace_count += 1
             else:
                 total += card.card_value()
-        # Determine the value of aces
 
+        # Determine the value of aces
         for _ in range(ace_count):
             if total + 11 <= 21:
                 total += 11
@@ -141,15 +156,6 @@ class Hand:
                 total += 1
 
         return total
-
-
-    def reset(self):
-
-        ''' For resetting the hand between games '''
-
-        self.cards.clear()
-        self.draw()
-        self.draw()
 
 
     def draw(self):
@@ -161,38 +167,27 @@ class Hand:
 
         '''
 
-        self.cards.append(Game.deck.deal_card())
+        self.cards.append(Partecipant.deck.deal_card())
+
 
 
     def __str__(self):
-        return f"{', '.join(map(str, self.cards))}"
+        return str([str(c) for c in self.cards])
 
 
+class Partecipant():
 
-class Player:
-
-    '''
-
-    creating the 'Player' class
-
-    this will have a multitude of select-able values
-    a strategy, a name, and a budget
-    this will all be managed by the player throughout the game
-    whether it's a bot or a person.
-
-    '''
+    deck = Deck()
 
     def __init__(self, budget: int, strategy: str, name: str):
-        self.name = name
-        self.hand = Hand()
-        self.state = 'play'
-        self.strategy = strategy
+        self.name, self.budget, self.strategy = name, budget, strategy
+
+        self.hand = Hand(self.deck)
+
+        self.state, self.broke = 'play', False
         self.bid_amount = 0
         self.starting_bid = 10
         self.current_simulated_bid = self.starting_bid
-        self.budget = budget
-        self.broke = False
-
 
     # player action
     def hit(self):
@@ -206,6 +201,8 @@ class Player:
 
         self.hand.draw()
 
+        self.check_broke()
+
     def stay(self):
 
         '''
@@ -218,29 +215,6 @@ class Player:
 
         self.state = 'stay'
 
-
-    def bid(self, amount = 0) ->int :
-
-        '''
-
-        Get a bid from the player if the player is actually a player,
-        otherwise automate the bid
-
-        '''
-
-        if self.strategy is None :
-            if self.check_broke():
-                print('You are out of money and cannot bid anymore')
-            else:
-                self.bid_amount = int(input('How much?\n'))
-                while self.bid_amount > self.budget:
-                    self.bid_amount = int(input('How much?\n'))
-                    print(f'You don\'t have that much. You have: ${self.budget}')
-        else:
-            self.bid_amount = amount
-
-        self.budget -= amount
-        return self.bid_amount
 
 
     #status ceck point
@@ -268,6 +242,49 @@ class Player:
             return True
         return False
 
+    def bid(self, amount = 0) ->int :
+
+        '''
+
+        Get a bid from the player if the player is actually a player,
+        otherwise automate the bid
+
+        '''
+
+        if self.strategy is None or amount == 0 :
+            if self.check_broke():
+                print('You are out of money and cannot bid anymore')
+            else:
+                self.bid_amount = int(input('How much?\n'))
+                while self.bid_amount > self.budget:
+                    self.bid_amount = int(input('How much?\n'))
+                    print(f'You don\'t have that much. You have: ${self.budget}')
+        else:
+            self.bid_amount = amount
+
+        self.budget -= amount
+        return self.bid_amount
+
+
+
+
+class Player(Partecipant):
+
+    '''
+
+    creating the 'Player' class
+
+    this will have a multitude of select-able values
+    a strategy, a name, and a budget
+    this will all be managed by the player throughout the game
+    whether it's a bot or a person.
+
+    '''
+
+    def __init__(self, budget: int = 100, strategy: str = None, name: str = 'Player'):
+        super().__init__(budget, strategy, name)
+
+
 
     # strategies
     def strategy_player(self, strdealer_up_card: classmethod):
@@ -281,7 +298,6 @@ class Player:
         '''
         dealer_up_card = strdealer_up_card
         player_hand_value = self.hand.value()
-        
         if self.strategy == "strategy_one":
             # Define the basic strategy decisions based
             # on the player's hand value and the dealer's up card
@@ -295,7 +311,7 @@ class Player:
             else:
                 if player_hand_value <= 11:
                     self.hit()
-                elif player_hand_value == 12: 
+                elif player_hand_value == 12:
                     if dealer_up_card.rank in [2, 3, 7, 8, 9, 10, 'J', 'Q', 'K', 'A']:
                         self.hit()
                     else:
@@ -308,13 +324,22 @@ class Player:
                 else:
                     self.stay()
 
+        elif self.strategy == "strategy_one":
+
+        # A completely random strategy to test the game
+
+          if self.state == 'play' and randint((True, False)):
+              self.hit()
+          else:
+              self.stay()
+
 
     def __str__(self):
         return f"Name: {str(self.name)}; Budget: {str(self.budget)};\nHand: {str(self.hand)};\nHand Value: {str(self.hand.value())}\n"
 
 
 
-class Dealer(Player):
+class Dealer(Partecipant):
 
     '''
 
@@ -326,7 +351,6 @@ class Dealer(Player):
     # initialize the dealer as a player
     def __init__(self):
         super().__init__(float('inf'), 'dealer', 'Dealer')
-        self.up_card = self.hand.cards[0]
 
     def dealer_strategy(self):
 
@@ -345,11 +369,13 @@ class Dealer(Player):
             self.stay()
 
     def __str__(self):
-        return f"Name: {self.name}; up_card: {self.up_card}"
+        return f"Name: {self.name}; up_card: [{str(self.hand.cards[0])}]\n"
 
 
 
-class Game:
+class Game():
+
+    game_count = 0
 
     '''
 
@@ -361,16 +387,15 @@ class Game:
 
     '''
 
-    game_count = 0
-    deck = Deck()
+    
 
-    def __init__(self,  budget: int =100, strategy: Union[None, Literal['strategy_one']] = None , name: str ='Player'):
+    def __init__(self,  budget: int =100, strategy: Union[None, Literal['strategy_one', 'random']] = None , name: str ='Player'):
 
         self.dealer = Dealer()
         self.player = Player(budget, strategy, name)
         self.pot = 0
         self.simulated = False
-        Game.game_count += 1
+        self.game_count += 1
 
 
     def log_game(self):
@@ -390,6 +415,8 @@ class Game:
     def player_turn(self):
 
         ''' player's turn function '''
+        if self.player.strategy == 'random':
+            self.pot += self.player.bid(10)
 
         if self.player.strategy is None:
 
@@ -401,7 +428,7 @@ class Game:
             while player_move not in option:
                 print('Not a valid move')
                 player_move = input(question).upper()
-            
+
             # execute that move
             if player_move in option[:2]:
                 self.player.hit()
@@ -411,26 +438,28 @@ class Game:
                 self.pot += self.player.bid()
 
             print(f"Hand: {self.player.hand}")
-            print(f"Hand Value: {self.player.hand.value()}")
-            print()
+            print(f"Hand Value: {self.player.hand.value()} \n")
 
             # Check if the player busted
             if self.player.check_bust():
                 print('Sorry, you busted.')
-                return True
 
 
         # get the move that the player wants to do
-        else:
-            self.player.strategy_player(self.dealer.up_card)
+        elif self.player.strategy == 'strategy_one':
+            self.player.strategy_player(self.dealer.hand.cards[0])
+
             self.player.check_bust()
 
             # in this version we are using the 2 - 1 - 2 bidding strategy
             # which increments by 1 every win, then resets to 1 at a loss
 
             self.pot += self.player.bid(self.player.current_simulated_bid)
-        
-        
+        else:
+            self.player.strategy_random()
+            self.player.check_bust()
+
+
     def check_win(self) -> bool:
 
         '''
@@ -443,22 +472,12 @@ class Game:
         and the player hasn't
 
         '''
-        
-        # Check bust for both
-        self.dealer.check_bust()
-        self.player.check_bust()
 
-        player_value = self.player.hand.value()
-        dealer_value = self.dealer.hand.value()
-    
-        if (player_value > dealer_value and self.player.state != 'bust') or self.dealer.state == 'bust':
-            if self.player.state == 'bust' and self.dealer.state == 'bust':
-                return False
-            else:
-                self.player.budget += self.pot
-                return True
-        else:
-            return False
+        if  self.player.state != 'bust' and (self.player.hand.value() > self.dealer.hand.value() or self.dealer.state == 'bust'):
+            self.player.budget += self.pot
+            return True
+        return False
+
 
 
     def change_bid(self):
@@ -471,8 +490,8 @@ class Game:
         '''
 
         if self.check_win():
+            self.player.current_simulated_bid += self.player.starting_bid
             self.player.budget += self.pot
-            self.player.current_simulated_bid += 2
         else:
             self.player.current_simulated_bid = self.player.starting_bid
 
@@ -488,35 +507,171 @@ class Game:
         '''
 
         self.pot = 0
+        self.player.state = 'play'
 
         if self.player.strategy is None:
             print('Buy in is 10 bucks.')
             print(self.dealer)
-            print()
             print(self.player)
+
 
         # while the player and is not staying, busted or out of budget
         while 'play' in (self.player.state, self.dealer.state):
-            if self.player_turn():
-                break
-            self.dealer.dealer_strategy()
-           
+            if self.player.state == 'play':
+                self.player_turn()
+            if self.dealer.state == 'play':
+                self.dealer.dealer_strategy()
+
         # add the dealers bet to the pot, which will always be equal to the pot.
         self.pot += self.dealer.bid(self.pot)
+
+        # Check bust for both
+        self.dealer.check_bust()
+        self.player.check_bust()
 
         # Check win and lost
         if self.player.strategy is None:
             if self.check_win():
-                print("You win!")
-            else: 
-                print("You lose.")
-        else: 
+                print('You won this round.')
+            else:
+                print('You lost this round.')
+        elif self.player.strategy == "strategy_one":
             self.change_bid()
-            
+        else:
+            self.check_win()
 
         self.log_game()
-        #print(data[-1])
-        
+        # print(data[-1])
+        return self.player.budget
+
+
+#    <------------- TESTS ------------->
+
+class Test():
+
+    def card_test():
+        ''' manually create 4 cards to make sure all the special things work '''
+        card1 = Card('9', 'Spades')
+        card2 = Card('3', 'Hearts')
+        card3 = Card('K', 'Clubs')
+        card4 = Card('A', 'Diamonds')
+        print(card1, card2, card3, card4)
+
+
+    def deck_test():
+        '''
+
+        create a deck, display the deck to test the str
+        then shuffle and re-display to test the shuffle method
+
+        '''
+        deck = Deck()
+        deck.generate_deck()
+        print('<----------- Before Shuffle ----------->')
+        print(deck)
+        deck = Deck()
+        print('<----------- After Shuffle ----------->')
+        print(deck)
+
+
+    def hand_test():
+        ''' make a new hand and print it and its value. '''
+
+        deck = Deck()
+        hand = Hand(deck)
+        print(hand)
+        print(hand.value())
+        print(hand.soft)
+
+
+    def player_test():
+        ''' make sure the player class and each of there moves are working. '''
+        player1 = Player(200, None, 'Andrea')
+        player2 = Player(100)
+        player3 = Player(100, None, 'Rob')
+        player4 = Player(300, None, 'Tara')
+        print(player1, '\n' + str(player2), '\n' + str(player3), '\n' + str(player4))
+        player4.hit()
+        print(player4)
+
+
+    def dealer_test():
+
+        ''' simply test a dealer by creating and printing '''
+
+        dealer = Dealer()
+        print(dealer)
+        while dealer.state not in ['stay', 'bust']:
+            dealer.dealer_strategy()
+            print(dealer.state, [ str(card) for card in dealer.hand.cards], dealer.hand.value())
+
+
+    def simulate_game():
+
+        ''' Run a game, based on the provided strategy. '''
+        next_game_budget = 0
+        number_of_games = 0
+        print('<--------------------------------------- GAME --------------------------------------->')
+        while next_game_budget <= 0:
+            next_game_budget = int(input("How much money? \n"))
+        while number_of_games <= 0:
+            number_of_games = int(input("How many games would you like to simulate? \n"))
+        for _ in range(number_of_games):
+            game = Game(next_game_budget, "strategy_one")
+            next_game_budget = game.run()
+
+
+        # <--- Pyplot stuff --->
+        # plt.pcolor(250,250,250)
+        plt.plot(range(number_of_games), data)
+        plt.grid(True)
+        plt.title("Simulated game")
+        plt.tight_layout()
+        plt.xlabel('Games')
+        plt.ylabel('Money')
+        plt.show()
+
+    def play_game():
+
+        ''' Run a game, with the player playing '''
+        money = 1000
+        continue_playing = 'Y'
+        print('<--------------------------------------- GAME --------------------------------------->')
+        while continue_playing not in ['N', 'NO']:
+            game = Game(money, None)
+            money = game.run()
+            continue_playing = input('Want to keep playing? Y/N\n').upper()
+
+
+
+
+def run():
+
+    ''' Run the program '''
+
+    done = False
+    while not done:
+        which = input('\nWhat would you like to run?\n 1) Test Card\n 2) Test Deck'+
+            '\n 3) Test Player\n 4) Test Dealer\n 5) Simulate Game\n 6) Play Game\n 7) End \n').upper()
+        if which in ['1', 'TEST CARD', 'CARD']:
+            Test.card_test()
+        elif which in ['2', 'TEST DECK', 'DECK']:
+            Test.deck_test()
+        elif which in ['3', 'TEST PLAYER', 'PLAYER']:
+            Test.player_test()
+        elif which in ['4', 'TEST DEALER', 'DEALER']:
+            Test.dealer_test()
+        elif which in ['5', 'SIMULATE']:
+            Test.simulate_game()
+            done = True
+        elif which in ['6', 'PLAY GAME', 'PLAY']:
+            Test.play_game()
+        elif which in ['7', 'END']:
+            done = True
+            exit()
+        else:
+            print('Invalid input.')
+
+
 if __name__ == "__main__":
-    game = Game(strategy= None)
-    game.run()
+    run()
