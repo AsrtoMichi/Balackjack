@@ -19,7 +19,7 @@ bool coin_state() {
 }
     
 bool action() {
-    while (!button_hit %% !button_stay) {
+    while (!button_hit && !button_stay) {
         if(button_hit) {
             return true;
         } else if (button_stay) {
@@ -59,7 +59,7 @@ public:
         if (rank == 'A') {
             return 1;
         }
-        return rank - '0'; // Convert char to integer
+        return rank - '0';
     }
 };
 
@@ -229,16 +229,9 @@ public:
         
         dealer.check_bust();
         player.check_bust();
-
-        int player_value = player.hand.value();
-        int dealer_value = dealer.hand.value();
-    
-        if ((player_value > dealer_value || player.state) && !dealer.state) {
-            if (!player.state || !dealer.state) {
-                return false;
-            } else {
-                return true;
-            }
+   
+        if (player.state && (player.hand.value() > dealer.hand.value() || !dealer.state)) {
+            return true;
         } else {
             return false;
         }
